@@ -3,6 +3,8 @@ import json
 import shutil
 import requests
 import argparse
+import time
+
 
 from datetime import datetime
 from pick import pick
@@ -82,9 +84,11 @@ def fetch_message_data(payload):
     r = data = None
     back = 0
 
-    try: 
+
         # while there are older messages
-        while r == None or data['has_more']:
+    delay = 0
+    while r == None or data['has_more']:
+        try: 
             # and it is not the first request
             if r != None:
                 # change the 'latest' argument to fetch older messages
@@ -97,13 +101,18 @@ def fetch_message_data(payload):
             data =  r.json()
             if data['ok']:
                 messages = []
+         
+
                 for message in data['messages']:
+                    human_date = datetime.fromtimestamp(float(message['ts'])).strftime('%Y-%m-%d %H:%M:%S')
+                    print(human_date)
+                    # print("message", message)
                     messages.append({
                     'user_id': message['user'], 
                     'user_name': users[message['user']]['name'],
                     'text': message['text'],
                     'ts': message['ts'],
-                    'date': datetime.fromtimestamp(float(message['ts'])).strftime('%Y-%m-%d %H:%M:%S')
+                    'date': human_date
                 })
                 with open(f"chat_{payload['channel']}_({back}-{back + len(data['messages']) - 1}).txt", 'w') as f:
                     json.dump(messages, f)
@@ -111,9 +120,13 @@ def fetch_message_data(payload):
             else:
                 print(f"Error: {data['error']}")
 
-    except Exception as e:
-        print(e)
-        print(f'Something went wrong. Status code: {r.status_code}')
+            # delay += 0.07
+            # print("delay", delay)
+            # time.sleep(delay)
+
+        except Exception as e:
+            print(e)
+            print(f'Something went wrong. Status code: {r.status_code}')
 
 if __name__ == "__main__":
 
@@ -145,7 +158,7 @@ if __name__ == "__main__":
         retrieve_data('conversations.list', PAYLOAD)
 
         # Select chat to export
-        title = 'Please the conversation to export: '
+        title = 'Please select the conversation to export: '
         convers, options = fetch_conversations()
 
         option, index = pick([f"Chat {option} with {convers[option]['user_name']}" for option in options], title)
@@ -158,4 +171,3 @@ if __name__ == "__main__":
     else:
         # Auth fail
         pass
-        
