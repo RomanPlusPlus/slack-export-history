@@ -6,6 +6,8 @@ To do so, follow two steps:
 
 Create a virtual environment:
 
+`cd ~/ && mkdir -p python_virtual_envs && cd python_virtual_envs`
+
 `python3 -m venv slack_backup`
 
 Activate it:
